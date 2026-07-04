@@ -19,11 +19,20 @@ public class DataRoute extends RouteBuilder {
         // Route to send data to Kafka topic
         from("direct:sendToKafka")
             .log("Received data: ${body}")
+            .onException(com.fasterxml.jackson.core.JsonProcessingException.class)
+                .log("ERROR: Invalid JSON: ${exception.message}")
+                .handled(true)
+                .setHeader("Content-Type", constant("application/json"))
+                .setHeader("CamelHttpResponseCode", constant(400))
+                .setBody(constant("{\"status\":\"error\",\"message\":\"Invalid JSON\"}"))
+            .end()
             .onException(Exception.class)
                 .log("ERROR: Failed to send message to Kafka: ${exception.message}")
                 .handled(true)
                 .setBody(constant("{\"status\":\"error\",\"message\":\"Failed to send to Kafka\"}"))
             .end()
+            .unmarshal().json()  // Validate JSON
+            .marshal().json()    // Convert back to JSON string
             .to("kafka:fhir-data?brokers={{kafka.bootstrap.servers}}")
             .log("SUCCESS: Message sent to Kafka topic fhir-data")
             .setBody(constant("{\"status\":\"success\",\"message\":\"Data sent to Kafka\"}"));

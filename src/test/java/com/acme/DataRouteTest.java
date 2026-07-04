@@ -1,23 +1,17 @@
 package com.acme;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.kafka.InjectKafkaCompanion;
+import io.quarkus.test.kafka.KafkaCompanionResource;
 import io.restassured.http.ContentType;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.smallrye.reactive.messaging.kafka.companion.ConsumerTask;
 import org.junit.jupiter.api.Test;
 
-import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
@@ -25,32 +19,12 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
+@QuarkusTestResource(KafkaCompanionResource.class)
 public class DataRouteTest {
 
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String bootstrapServers;
+    @InjectKafkaCompanion
+    KafkaCompanion companion;
 
-    private KafkaConsumer<String, String> consumer;
-
-    @BeforeEach
-    public void setUp() {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-consumer-" + System.currentTimeMillis());
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(Collections.singletonList("fhir-data"));
-    }
-
-    @AfterEach
-    public void tearDown() {
-        if (consumer != null) {
-            consumer.close();
-        }
-    }
 
     @Test
     public void testDataEndpointReturnsSuccess() {
@@ -70,7 +44,11 @@ public class DataRouteTest {
 
     @Test
     public void testMessageSentToKafka() {
-        String requestBody = "{\"patient\":\"67890\",\"status\":\"pending\",\"timestamp\":\"2026-07-03T12:00:00Z\"}";
+        String uniqueId = "test-msg-" + System.currentTimeMillis();
+        String requestBody = String.format(
+            "{\"patient\":\"%s\",\"status\":\"pending\",\"timestamp\":\"2026-07-03T12:00:00Z\"}",
+            uniqueId
+        );
 
         // Send the request
         given()
@@ -82,29 +60,31 @@ public class DataRouteTest {
             .statusCode(200);
 
         // Wait for and verify message was sent to Kafka
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-            assertFalse(records.isEmpty(), "Should receive at least one message");
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(500)).untilAsserted(() -> {
+            List<String> messages = companion.consumeStrings()
+                .fromTopics("fhir-data", 100, Duration.ofSeconds(2))
+                .awaitCompletion()
+                .getRecords()
+                .stream()
+                .map(record -> record.value())
+                .collect(Collectors.toList());
 
-            boolean found = false;
-            for (ConsumerRecord<String, String> record : records) {
-                if (record.value().contains("\"patient\":\"67890\"") &&
-                    record.value().contains("\"status\":\"pending\"")) {
-                    found = true;
-                    break;
-                }
-            }
-            assertTrue(found, "Should contain the test message");
+            boolean found = messages.stream().anyMatch(msg ->
+                msg.contains("\"patient\":\"" + uniqueId + "\"")
+            );
+            assertTrue(found, "Should contain the test message with ID: " + uniqueId + ". Found " + messages.size() + " messages.");
         });
     }
 
     @Test
     public void testMultipleMessages() {
+        String testId = "multi-test-" + System.currentTimeMillis();
+
         // Send multiple messages
         for (int i = 0; i < 3; i++) {
             String requestBody = String.format(
-                "{\"patient\":\"patient-%d\",\"status\":\"active\",\"timestamp\":\"2026-07-03T12:00:00Z\"}",
-                i
+                "{\"patient\":\"%s-%d\",\"status\":\"active\",\"timestamp\":\"2026-07-03T12:00:00Z\"}",
+                testId, i
             );
 
             given()
@@ -117,21 +97,20 @@ public class DataRouteTest {
         }
 
         // Wait for and verify all messages were sent to Kafka
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-            List<String> messages = new ArrayList<>();
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-
-            for (ConsumerRecord<String, String> record : records) {
-                messages.add(record.value());
-            }
-
-            assertTrue(messages.size() >= 3, "Should receive at least 3 messages");
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(500)).untilAsserted(() -> {
+            List<String> messages = companion.consumeStrings()
+                .fromTopics("fhir-data", 100, Duration.ofSeconds(2))
+                .awaitCompletion()
+                .getRecords()
+                .stream()
+                .map(record -> record.value())
+                .collect(Collectors.toList());
 
             for (int i = 0; i < 3; i++) {
                 final int index = i;
                 assertTrue(
-                    messages.stream().anyMatch(m -> m.contains("\"patient\":\"patient-" + index + "\"")),
-                    "Should contain message for patient-" + index
+                    messages.stream().anyMatch(m -> m.contains("\"patient\":\"" + testId + "-" + index + "\"")),
+                    "Should contain message for " + testId + "-" + index + ". Found " + messages.size() + " messages."
                 );
             }
         });

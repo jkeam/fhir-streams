@@ -88,6 +88,8 @@ curl -X POST http://localhost:8080/api/data \
   -d '{"patient":"12345","status":"active","timestamp":"2026-07-02T10:00:00Z"}'
 ```
 
+Replace `localhost:8080` with your OpenShift route for a deployed app.
+
 ## Docs
 
 ### Apache Kafka on OpenShift Docs

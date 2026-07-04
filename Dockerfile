@@ -1,0 +1,51 @@
+####
+# Multi-stage Dockerfile for Quarkus application
+####
+
+## Stage 1: Build the application
+FROM registry.access.redhat.com/ubi9/openjdk-17:1.20 AS build
+
+USER root
+
+# Copy Maven wrapper and pom.xml
+COPY --chown=default:root mvnw /code/mvnw
+COPY --chown=default:root .mvn /code/.mvn
+COPY --chown=default:root pom.xml /code/
+
+# Download dependencies
+WORKDIR /code
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY --chown=default:root src /code/src
+
+# Build the application
+RUN ./mvnw package -DskipTests -Dquarkus.package.jar.type=uber-jar
+
+## Stage 2: Create the runtime image
+FROM registry.access.redhat.com/ubi9/openjdk-17-runtime:1.20
+
+# Set environment variables
+ENV LANGUAGE='en_US:en'
+
+# Copy the uber jar from build stage
+COPY --from=build --chown=185 /code/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=build --chown=185 /code/target/quarkus-app/*.jar /deployments/
+COPY --from=build --chown=185 /code/target/quarkus-app/app/ /deployments/app/
+COPY --from=build --chown=185 /code/target/quarkus-app/quarkus/ /deployments/quarkus/
+
+# Copy truststore for Kafka SSL
+COPY --chown=185 src/main/resources/kafka-truststore.jks /deployments/config/kafka-truststore.jks
+
+# Expose application port
+EXPOSE 8080
+
+# Set user to non-root (OpenShift requirement)
+USER 185
+
+# Set the Java options
+ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+
+# Run the application
+ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]

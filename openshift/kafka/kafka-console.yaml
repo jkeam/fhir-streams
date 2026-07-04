@@ -4,7 +4,7 @@ metadata:
   name: fhir-console
   namespace: fhir
 spec:
-  hostname: fhir-console.apps.clustername.host.com:443
+  hostname: fhir-console.apps.rosa.dha-test.zu23.p3.openshiftapps.com
   kafkaClusters:
     - name: fhir-cluster
       namespace: fhir

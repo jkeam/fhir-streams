@@ -56,6 +56,19 @@ oc get secret fhir-cluster-cluster-ca-cert -n fhir -o jsonpath='{.data.ca\.crt}'
 keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storepass changeit -noprompt
 ```
 
+Then build and deploy
+
+```shell
+podman build -t quay.io/username/fhir-streams -f ./Dockerfile .
+podman push -t quay.io/username/fhir-streams
+```
+
+Then update `./openshift/app/deployment.yaml`
+
+```shell
+oc apply -k openshift/app
+```
+
 ## Testing
 
 ### Unit Testing

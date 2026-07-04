@@ -7,6 +7,7 @@ resources:
   - kafka-node-pool-broker.yaml
   - kafka-node-pool-controller.yaml
   - kafka-topic.yaml
+  - kafka-console.yaml
 
 labels:
   - pairs:

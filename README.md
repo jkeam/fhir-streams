@@ -4,6 +4,7 @@
 
 1. OpenShift 4.20+
 2. Streams for Apache Kafka v3.20+
+3. Streams for Apache Kafka Console v3.20+
 
 ## Setup
 
@@ -37,6 +38,8 @@ mvn quarkus:dev -Dquarkus.profile=dev
 ```
 
 ### OpenShift
+
+Update `./openshift/kafka/kafka-console.yaml`
 
 ```shell
 oc new-project fhir

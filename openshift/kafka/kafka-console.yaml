@@ -1,0 +1,11 @@
+kind: Console
+apiVersion: console.streamshub.github.com/v1alpha1
+metadata:
+  name: fhir-console
+  namespace: fhir
+spec:
+  hostname: fhir-console.apps.clustername.host.com:443
+  kafkaClusters:
+    - name: fhir-cluster
+      namespace: fhir
+      listener: tls

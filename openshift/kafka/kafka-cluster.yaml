@@ -11,13 +11,9 @@ spec:
       default.replication.factor: 3
       min.insync.replicas: 2
     listeners:
-      - name: plain
-        port: 9092
-        type: internal
-        tls: false
       - name: tls
-        port: 9093
-        type: internal
+        port: 9092
+        type: route
         tls: true
     version: 4.2.0
     metadataVersion: "4.2"

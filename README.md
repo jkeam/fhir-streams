@@ -39,7 +39,7 @@ mvn quarkus:dev -Dquarkus.profile=dev
 
 ### OpenShift
 
-Update `./openshift/kafka/kafka-console.yaml`
+First, update the `hostname` in `./openshift/kafka/kafka-console.yaml`.
 
 ```shell
 oc new-project fhir

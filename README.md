@@ -76,6 +76,15 @@ curl -X POST http://localhost:8080/api/data \
 
 ## Docs
 
+### Apache Kafka on OpenShift Docs
+
+1. [Streams for Apache Kafka 3.2](https://docs.redhat.com/en/documentation/red_hat_streams_for_apache_kafka/3.2)
+2. [Getting Started with Streams for Apache Kafka on OpenShift](https://docs.redhat.com/en/documentation/red_hat_streams_for_apache_kafka/3.2/html/getting_started_with_streams_for_apache_kafka_on_openshift/index)
+3. [Deploying and Managing Streams for Apache Kafka on OpenShift](https://docs.redhat.com/en/documentation/red_hat_streams_for_apache_kafka/3.2/html/deploying_and_managing_streams_for_apache_kafka_on_openshift/index)
+4. [Using the Streams for Apache Kafka Console](https://docs.redhat.com/en/documentation/red_hat_streams_for_apache_kafka/3.2/html/using_the_streams_for_apache_kafka_console/index)
+
+### AI Generated
+
 All extra docs are in the `docs` directory.
 
 1. README-SETUP.md - Main readme describing this project, how to build, and how to test

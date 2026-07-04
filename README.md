@@ -53,6 +53,24 @@ oc get secret fhir-cluster-cluster-ca-cert -n fhir -o jsonpath='{.data.ca\.crt}'
 keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storepass changeit -noprompt
 ```
 
+## Testing
+
+### Unit Testing
+
+```shell
+mvn test
+```
+
+### Manual Testing
+
+Start the app and POST the following.
+
+```shell
+curl -X POST http://localhost:8080/api/data \
+  -H "Content-Type: application/json" \
+  -d '{"patient":"12345","status":"active","timestamp":"2026-07-02T10:00:00Z"}'
+```
+
 ## Docs
 
 All extra docs are in the `docs` directory.

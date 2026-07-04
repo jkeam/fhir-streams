@@ -59,6 +59,10 @@ keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jk
 Then build and deploy
 
 ```shell
+# mvn package -Dquarkus.container-image.build=true -DskipTests \
+#   -Dquarkus.container-image.group=username \
+#   -Dquarkus.container-image.name=fhir-streams \
+#   -Dquarkus.container-image.tag=latest
 podman build -t quay.io/username/fhir-streams -f ./Dockerfile .
 podman push -t quay.io/username/fhir-streams
 ```

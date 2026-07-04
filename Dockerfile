@@ -26,11 +26,8 @@ FROM registry.access.redhat.com/ubi9/openjdk-17-runtime:1.20
 # Set environment variables
 ENV LANGUAGE='en_US:en'
 
-# Copy the uber jar from build stage
-COPY --from=build --chown=185 /code/target/quarkus-app/lib/ /deployments/lib/
-COPY --from=build --chown=185 /code/target/quarkus-app/*.jar /deployments/
-COPY --from=build --chown=185 /code/target/quarkus-app/app/ /deployments/app/
-COPY --from=build --chown=185 /code/target/quarkus-app/quarkus/ /deployments/quarkus/
+# Copy app
+COPY --from=build --chown=185 /code/target/fhir-streams-1.0.0-SNAPSHOT-runner.jar /deployments
 
 # Copy truststore for Kafka SSL
 COPY --chown=185 src/main/resources/kafka-truststore.jks /deployments/config/kafka-truststore.jks
@@ -43,7 +40,7 @@ USER 185
 
 # Set the Java options
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+ENV JAVA_APP_JAR="/deployments/fhir-streams-1.0.0-SNAPSHOT-runner.jar"
 
 # Run the application
-ENTRYPOINT [ "java", "-jar", "/deployments/quarkus-run.jar" ]
+ENTRYPOINT [ "java", "-jar", "/deployments/fhir-streams-1.0.0-SNAPSHOT-runner.jar" ]

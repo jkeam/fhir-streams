@@ -7,8 +7,7 @@ FROM registry.access.redhat.com/ubi9/openjdk-17:1.20 AS build
 
 USER root
 
-# Copy Maven wrapper and pom.xml
-COPY --chown=default:root .mvn /code/.mvn
+# Copy pom.xml
 COPY --chown=default:root pom.xml /code/
 
 # Download dependencies

@@ -14,13 +14,13 @@ COPY --chown=default:root pom.xml /code/
 
 # Download dependencies
 WORKDIR /code
-RUN ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # Copy source code
 COPY --chown=default:root src /code/src
 
 # Build the application
-RUN ./mvnw package -DskipTests -Dquarkus.package.jar.type=uber-jar
+RUN mvn package -DskipTests -Dquarkus.package.jar.type=uber-jar
 
 ## Stage 2: Create the runtime image
 FROM registry.access.redhat.com/ubi9/openjdk-17-runtime:1.20

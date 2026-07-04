@@ -59,15 +59,12 @@ keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jk
 Then build and deploy
 
 ```shell
-# mvn package -Dquarkus.container-image.build=true -DskipTests \
-#   -Dquarkus.container-image.group=username \
-#   -Dquarkus.container-image.name=fhir-streams \
-#   -Dquarkus.container-image.tag=latest
 podman build -t quay.io/username/fhir-streams -f ./Dockerfile .
 podman push -t quay.io/username/fhir-streams
 ```
 
-Then update `./openshift/app/deployment.yaml`
+Then update `./openshift/app/kustomization.yaml` with your image
+and `./openshift/app/deployment.yaml` with your Kafka bootstrap URL with key `KAFKA_BOOTSTRAP_SERVERS`.
 
 ```shell
 oc apply -k openshift/app

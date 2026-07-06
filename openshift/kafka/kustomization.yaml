@@ -14,4 +14,3 @@ labels:
       app.kubernetes.io/name: fhir
       managed-by: kustomize
     includeSelectors: true
-

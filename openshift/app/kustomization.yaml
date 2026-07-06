@@ -10,8 +10,3 @@ resources:
 commonLabels:
   app.kubernetes.io/part-of: fhir-streams
   app.kubernetes.io/managed-by: kustomize
-
-images:
-  - name: fhir-streams
-    newName: quay.io/username/fhir-streams
-    newTag: latest

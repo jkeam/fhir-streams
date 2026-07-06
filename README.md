@@ -53,7 +53,7 @@ cd ./src/main/resources
 # ca.crt
 oc get secret fhir-cluster-cluster-ca-cert -n fhir -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt
 # kafka-truststore.jks
-keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storepass changeit -noprompt
+keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storetype JKS -storepass changeit -noprompt
 ```
 
 Then build and deploy
@@ -63,8 +63,10 @@ podman build -t quay.io/username/fhir-streams -f ./Dockerfile .
 podman push -t quay.io/username/fhir-streams
 ```
 
-Then update `./openshift/app/kustomization.yaml` with your image
-and `./openshift/app/deployment.yaml` with your Kafka bootstrap URL with key `KAFKA_BOOTSTRAP_SERVERS`.
+Then update `./openshift/app/deployment.yaml` with:
+
+1. `spec.template.spec.containers[?(@.name == 'fhir-streams')].image` with your container image
+2. `spec.template.spec.containers[?(@.name == 'fhir-streams')].env[?(@.name == 'KAFKA_BOOTSTRAP_SERVERS')]` with your Kafka bootstrap URL
 
 Use this to get the Kafka Bootstrap server:
 
@@ -85,9 +87,36 @@ Create a new workspace using the `devfile`.
 Once in the dev space workspace, open up a terminal and run:
 
 ```shell
-cd ./openshift/kafka-dev-spaces
-oc apply -k ./
+oc apply -k ./openshift/kafka-dev-spaces
 ```
+
+Wait a bit for everything to come up and then let's generate a truststore for it:
+
+```shell
+cd ./src/main/resources
+# ca.crt
+oc get secret fhir-cluster-cluster-ca-cert -n fhir -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt
+# kafka-truststore.jks
+keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storetype JKS -storepass changeit -noprompt
+```
+
+Next, find and delete the following from `./src/main/resources/application.properties`:
+
+```properties
+%dev.camel.component.kafka.security-protocol=PLAINTEXT
+```
+
+and add this instead:
+
+```properties
+%dev.camel.component.kafka.security-protocol=SSL
+%dev.camel.component.kafka.additional-properties[ssl.truststore.location]=src/main/resources/kafka-truststore.jks
+%dev.camel.component.kafka.additional-properties[ssl.truststore.password]=changeit
+%dev.camel.component.kafka.additional-properties[ssl.truststore.type]=JKS
+%dev.camel.component.kafka.additional-properties[ssl.endpoint.identification.algorithm]=
+```
+
+Then run `mvn quarkus:dev` or run the associated `./devfile.yaml` task.
 
 ## Testing
 

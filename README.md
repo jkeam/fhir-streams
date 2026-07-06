@@ -123,7 +123,7 @@ and replace with this, making sure to set the `KAFKA_BOOTSTRAP_URL`:
 %dev.camel.component.kafka.additional-properties[ssl.truststore.password]=changeit
 %dev.camel.component.kafka.additional-properties[ssl.truststore.type]=JKS
 %dev.camel.component.kafka.additional-properties[ssl.endpoint.identification.algorithm]=
-# replace the following with the real value
+# FIXME: replace the following with the real value, found below
 %dev.kafka.bootstrap.servers=<$KAFKA_BOOTSTRAP_URL>
 ```
 

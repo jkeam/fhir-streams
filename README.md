@@ -66,9 +66,9 @@ podman push -t quay.io/username/fhir-streams
 Then update `./openshift/app/deployment.yaml` with:
 
 1. `spec.template.spec.containers[?(@.name == 'fhir-streams')].image` with your container image
-2. `spec.template.spec.containers[?(@.name == 'fhir-streams')].env[?(@.name == 'KAFKA_BOOTSTRAP_SERVERS')]` with your Kafka bootstrap URL
+2. `spec.template.spec.containers[?(@.name == 'fhir-streams')].env[?(@.name == 'KAFKA_BOOTSTRAP_SERVERS')]` with your Kafka Bootstrap URL (see below on how to obtain this)
 
-Use this to get the Kafka Bootstrap server:
+Use this to get the Kafka Bootstrap URL:
 
 ```shell
 echo "http://$(oc get routes/fhir-cluster-kafka-tls-bootstrap -o jsonpath='{.spec.host}' -n fhir)"
@@ -108,13 +108,6 @@ oc get secret fhir-cluster-cluster-ca-cert -o jsonpath='{.data.ca\.crt}' | base6
 keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storetype JKS -storepass changeit -noprompt
 ```
 
-Get your bootstrap server:
-
-```shell
-# This is the BOOTSTRAP_SERVER
-echo "$(oc get routes/fhir-cluster-kafka-tls-bootstrap -o jsonpath='{.spec.host}'):443"
-```
-
 Next, find and delete the following from `./src/main/resources/application.properties`:
 
 ```properties
@@ -122,7 +115,7 @@ Next, find and delete the following from `./src/main/resources/application.prope
 %dev.camel.component.kafka.security-protocol=PLAINTEXT
 ```
 
-and replace with this (making sure to replace `BOOTSTRAP_SERVER` with the URL above:
+and replace with this, making sure to set the `KAFKA_BOOTSTRAP_URL`:
 
 ```properties
 %dev.camel.component.kafka.security-protocol=SSL
@@ -131,10 +124,16 @@ and replace with this (making sure to replace `BOOTSTRAP_SERVER` with the URL ab
 %dev.camel.component.kafka.additional-properties[ssl.truststore.type]=JKS
 %dev.camel.component.kafka.additional-properties[ssl.endpoint.identification.algorithm]=
 # replace the following with the real value
-%dev.kafka.bootstrap.servers=<$BOOTSTRAP_SERVER>
+%dev.kafka.bootstrap.servers=<$KAFKA_BOOTSTRAP_URL>
 ```
 
-Then run `mvn quarkus:dev` from the project root or run the associated `./devfile.yaml` task.
+Use this to find your `KAFKA_BOOTSTRAP_URL`:
+
+```shell
+echo "$(oc get routes/fhir-cluster-kafka-tls-bootstrap -o jsonpath='{.spec.host}'):443"
+```
+
+Then run `mvn quarkus:dev` from the project root (`cd $PROJECT_SOURCE`) or run the associated `Run Task: Devfile` task.
 
 #### Destroying the Dev Space Workspace
 
@@ -143,6 +142,7 @@ To tear all this down first make sure your server is not running.
 Then from the project root, run:
 
 ```shell
+cd $PROJECT_SOURCE
 oc delete -k ./openshift/kafka-dev-spaces
 ```
 

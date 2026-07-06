@@ -80,6 +80,13 @@ Once everything looks good, deploy the app:
 oc apply -k openshift/app
 ```
 
+#### Destroying from OpenShift
+
+```shell
+oc delete -k ./openshift/app
+oc delete -k ./openshift/kafka-dev-spaces
+```
+
 ### Developing using Dev Spaces
 
 Create a new workspace using the `devfile`.
@@ -94,10 +101,18 @@ Wait a bit for everything to come up and then let's generate a truststore for it
 
 ```shell
 cd ./src/main/resources
+rm ./ca.crt ./kafka-truststore.jks
 # ca.crt
-oc get secret fhir-cluster-cluster-ca-cert -n fhir -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt
+oc get secret fhir-cluster-cluster-ca-cert -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt
 # kafka-truststore.jks
 keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storetype JKS -storepass changeit -noprompt
+```
+
+Get your bootstrap server:
+
+```shell
+# This is the BOOTSTRAP_SERVER
+echo "$(oc get routes/fhir-cluster-kafka-tls-bootstrap -o jsonpath='{.spec.host}'):443"
 ```
 
 Next, find and delete the following from `./src/main/resources/application.properties`:
@@ -107,7 +122,7 @@ Next, find and delete the following from `./src/main/resources/application.prope
 %dev.camel.component.kafka.security-protocol=PLAINTEXT
 ```
 
-and add this instead:
+and replace with this (making sure to replace `BOOTSTRAP_SERVER` with the URL above:
 
 ```properties
 %dev.camel.component.kafka.security-protocol=SSL
@@ -115,9 +130,24 @@ and add this instead:
 %dev.camel.component.kafka.additional-properties[ssl.truststore.password]=changeit
 %dev.camel.component.kafka.additional-properties[ssl.truststore.type]=JKS
 %dev.camel.component.kafka.additional-properties[ssl.endpoint.identification.algorithm]=
+# replace the following with the real value
+%dev.kafka.bootstrap.servers=<$BOOTSTRAP_SERVER>
 ```
 
-Then run `mvn quarkus:dev` or run the associated `./devfile.yaml` task.
+Then run `mvn quarkus:dev` from the project root or run the associated `./devfile.yaml` task.
+
+#### Destroying the Dev Space Workspace
+
+To tear all this down first make sure your server is not running.
+
+Then from the project root, run:
+
+```shell
+oc delete -k ./openshift/kafka-dev-spaces
+```
+
+Wait a bit for everything to get destroyed and then feel free to delete the dev space workspace.
+If things get stuck, check finalizers; in particular the KafkaTopic.
 
 ## Testing
 

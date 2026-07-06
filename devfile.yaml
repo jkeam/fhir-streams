@@ -1,0 +1,60 @@
+schemaVersion: 2.2.2
+metadata:
+  name: quarkus-quickstart
+components:
+  - name: tools
+    container:
+      image: registry.redhat.io/devspaces/udi-rhel9:3.28
+      env:
+        - name: QUARKUS_HTTP_HOST
+          value: 0.0.0.0
+      endpoints:
+        - exposure: none
+          name: debug
+          protocol: tcp
+          targetPort: 5005
+        - exposure: public
+          name: app
+          protocol: https
+          targetPort: 8080
+          path: /
+      volumeMounts:
+        - name: m2
+          path: /home/user/.m2
+      cpuLimit: '4'
+      cpuRequest: '1'
+      memoryLimit: '8G'
+      memoryRequest: '4G'
+      mountSources: true
+  - name: m2
+    volume:
+      size: 1G
+commands:
+  - id: 0-package
+    exec:
+      label: "0. Clean the build"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "mvn clean"
+      group:
+        kind: build
+        isDefault: false
+  - id: 1-package
+    exec:
+      label: "1. Package the application"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "mvn package"
+      group:
+        kind: build
+        isDefault: true
+  - id: 2-startdev
+    exec:
+      label: "2. Start Development mode (Hot reload + debug)"
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "mvn compile quarkus:dev"
+      group:
+        kind: run
+        isDefault: true
+

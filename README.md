@@ -66,8 +66,27 @@ podman push -t quay.io/username/fhir-streams
 Then update `./openshift/app/kustomization.yaml` with your image
 and `./openshift/app/deployment.yaml` with your Kafka bootstrap URL with key `KAFKA_BOOTSTRAP_SERVERS`.
 
+Use this to get the Kafka Bootstrap server:
+
+```shell
+echo "http://$(oc get routes/fhir-cluster-kafka-tls-bootstrap -o jsonpath='{.spec.host}' -n fhir)"
+```
+
+Once everything looks good, deploy the app:
+
 ```shell
 oc apply -k openshift/app
+```
+
+### Developing using Dev Spaces
+
+Create a new workspace using the `devfile`.
+
+Once in the dev space workspace, open up a terminal and run:
+
+```shell
+cd ./openshift/kafka-dev-spaces
+oc apply -k ./
 ```
 
 ## Testing

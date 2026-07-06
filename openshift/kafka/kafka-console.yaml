@@ -2,7 +2,6 @@ kind: Console
 apiVersion: console.streamshub.github.com/v1alpha1
 metadata:
   name: fhir-console
-  namespace: fhir
 spec:
   hostname: fhir-console.apps.rosa.dha-test.zu23.p3.openshiftapps.com
   kafkaClusters:

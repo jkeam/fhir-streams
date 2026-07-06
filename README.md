@@ -103,6 +103,7 @@ keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jk
 Next, find and delete the following from `./src/main/resources/application.properties`:
 
 ```properties
+%dev.kafka.bootstrap.servers=localhost:9092
 %dev.camel.component.kafka.security-protocol=PLAINTEXT
 ```
 

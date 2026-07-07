@@ -15,6 +15,8 @@ spec:
     metadata:
       labels:
         app: fhir-streams
+      annotations:
+        image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"fhir-streams:latest"},"fieldPath":"spec.template.spec.containers[0].image"}]'
     spec:
       containers:
       - name: fhir-streams
@@ -28,7 +30,7 @@ spec:
         - name: QUARKUS_PROFILE
           value: "prod"
         - name: KAFKA_BOOTSTRAP_SERVERS
-          value: "fhir-cluster-kafka-tls-bootstrap.fhir.svc.cluster.local:9092"
+          value: "fhir-cluster-kafka-tls-bootstrap-fhir.apps.clustername.domain.com:443"
         resources:
           requests:
             cpu: 250m

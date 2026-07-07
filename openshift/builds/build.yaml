@@ -1,0 +1,21 @@
+apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: fhir-streams-build
+  namespace: fhir
+  annotations:
+    build.shipwright.io/verify.repository: "true"
+spec:
+  source:
+    type: Git
+    git:
+      url: https://github.com/jkeam/fhir-streams
+    contextDir: .
+  strategy:
+    name: buildah
+    kind: ClusterBuildStrategy
+  paramValues:
+  - name: dockerfile
+    value: Dockerfile
+  output:
+    image: image-registry.openshift-image-registry.svc:5000/fhir/fhir-streams

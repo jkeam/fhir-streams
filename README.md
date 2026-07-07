@@ -5,8 +5,12 @@
 1. OpenShift 4.20+
 2. Streams for Apache Kafka v3.20+
 3. Streams for Apache Kafka Console v3.20+
+4. OpenShift Pipelines v1.22.4+
+5. Builds for OpenShift v1.8.0+
 
 ## Setup
+
+Fork this repo into your own GitHub account.
 
 ### Local
 
@@ -50,23 +54,23 @@ Once everything comes up, we need to populate our cert store.
 
 ```shell
 cd ./src/main/resources
+rm -f ./ca.crt ./kafka-truststore.jks
 # ca.crt
 oc get secret fhir-cluster-cluster-ca-cert -n fhir -o jsonpath='{.data.ca\.crt}' | base64 -d > ./ca.crt
 # kafka-truststore.jks
 keytool -importcert -alias kafka-ca -file ./ca.crt -keystore kafka-truststore.jks -storetype JKS -storepass changeit -noprompt
 ```
 
-Then build and deploy
+Check all this into your git repo.  Then update `./openshift/builds/build.yaml` with your git repo url.
 
 ```shell
-podman build -t quay.io/username/fhir-streams -f ./Dockerfile .
-podman push -t quay.io/username/fhir-streams
+oc apply -f ./openshift/builds/build.yaml
+oc create -f ./openshift/builds/build-run.yaml
 ```
 
-Then update `./openshift/app/deployment.yaml` with:
+After the build succeeds, then update `./openshift/app/deployment.yaml`:
 
-1. `spec.template.spec.containers[?(@.name == 'fhir-streams')].image` with your container image
-2. `spec.template.spec.containers[?(@.name == 'fhir-streams')].env[?(@.name == 'KAFKA_BOOTSTRAP_SERVERS')]` with your Kafka Bootstrap URL (see below on how to obtain this)
+Set `spec.template.spec.containers[?(@.name == 'fhir-streams')].env[?(@.name == 'KAFKA_BOOTSTRAP_SERVERS')]` with your Kafka Bootstrap URL (see below on how to obtain this)
 
 Use this to get the Kafka Bootstrap URL:
 

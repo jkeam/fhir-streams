@@ -15,12 +15,10 @@ spec:
     metadata:
       labels:
         app: fhir-streams
-      annotations:
-        image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"fhir-streams:latest"},"fieldPath":"spec.template.spec.containers[0].image"}]'
     spec:
       containers:
       - name: fhir-streams
-        image: fhir-streams:latest
+        image: image-registry.openshift-image-registry.svc:5000/fhir/fhir-streams
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

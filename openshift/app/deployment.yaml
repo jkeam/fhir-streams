@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: fhir-streams
-        image: image-registry.openshift-image-registry.svc:5000/fhir/fhir-streams
+        image: image-registry.openshift-image-registry.svc:5000/fhir/fhir-streams:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -28,7 +28,7 @@ spec:
         - name: QUARKUS_PROFILE
           value: "prod"
         - name: KAFKA_BOOTSTRAP_SERVERS
-          value: "fhir-cluster-kafka-tls-bootstrap-fhir.apps.clustername.domain.com:443"
+          value: "fhir-cluster-kafka-tls-bootstrap-fhir.apps.rosa.dha-test.zu23.p3.openshiftapps.com:443"
         resources:
           requests:
             cpu: 250m
